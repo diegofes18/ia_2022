@@ -14,11 +14,10 @@ from monedes.joc import Moneda
 SOLUCIO = " XXXC"
 
 class Estat():
+    def __init__(self,  pare=None):
 
-
-    def __init__(self, pare=None):
+        self.__info = Moneda()
         self.__pare = pare
-        self.__monedas = Moneda
 
 
         def get_pare(self):
@@ -32,7 +31,6 @@ class Estat():
             for act in AccionsMoneda:
                 estatf_i = Estat()
                 cost = act.value
-                estatf_i = Moneda._aplica(act)
 
 
 
@@ -87,7 +85,6 @@ class AgentMoneda(agent.Agent):
                 iterador = pare
             self.__accions = accions
             return True
-
 
     def calculate_f(self, estatf:Estat, estatp:Estat):
         pass
