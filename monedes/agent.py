@@ -9,30 +9,52 @@ Solució:
 from ia_2022 import agent, entorn
 from monedes.entorn import ClauPercepcio, AccionsMoneda
 from queue import PriorityQueue
-from monedes.joc import Moneda
+
 
 SOLUCIO = " XXXC"
 
-class Estat():
+class Estat:
+    def __init__(self,info,pes=0,pare=None):
 
+        if(info is not None):
+            self.__info=info
+        else:
+            self.__info={}
+        self.__pare=pare
+        self.__pes=pes
 
-    def __init__(self, pare=None):
-        self.__pare = pare
-        self.__monedas = Moneda
+    def get_weight(self):
+        return self.__pes
+    def set_weight(self, pes):
+        self.__pes = pes
 
+    def get_heuristica(self):
+        clau = list(self.__info.keys())  # llista claus
+        h=self.__info[clau[0]].index(' ')
+        for i in range(len(self.__info[clau[0]])):
+            print("I: "+str(i))
+            if(self.__info[clau[0]][i] != SOLUCIO[i])and(self.__info[clau[0]][i] != ' '):
+                h+=1
 
-        def get_pare(self):
-            return self.__pare
-        def set_pare(self, value):
-            self.__pare = value
+        return h + self.__pes
 
-        def genera_fill(self) -> dict:
-            # numero entero
-            costs = dict()
+    def genera_fills(self) -> list:
+        clau = list(self.__info.keys())
+        llista = [*self.__info[clau[0]]]  # string to list
+        for elem in llista:
             for act in AccionsMoneda:
-                estatf_i = Estat()
-                cost = act.value
-                estatf_i = Moneda._aplica(act)
+                estat_fi = Estat()
+
+
+
+    def es_meta(self) -> bool:
+        clau = list(self.__info.keys())
+        if (clau == SOLUCIO):
+            return True
+        else:
+            return False
+
+
 
 
 
@@ -50,12 +72,12 @@ class AgentMoneda(agent.Agent):
         self.__oberts = PriorityQueue()
         self.__tancats = set()
 
-        self.__oberts.put(3, estat)
+        self.__oberts.put((0, estat))
         actual = None
-        while not self.__oberts.empty():
-            actual = self.__oberts.get()
+        while self.__oberts.qsize() > 0:
+            actual = self.__oberts.get()[1]
+            print(str(actual))
             #self.__oberts = self.__oberts[1:]
-
             if actual in self.__tancats:
                 continue
 
@@ -69,10 +91,11 @@ class AgentMoneda(agent.Agent):
                 break
 
             for estat_f in estats_fills:
-                pass
+                self.__oberts.put((estat_f.get_weight(), estat_f))
                 #self.__oberts.append(estat_f)
 
             self.__tancats.add(actual)
+
         if actual is None:
             raise ValueError("Error impossible")
 
@@ -95,4 +118,13 @@ class AgentMoneda(agent.Agent):
     def actua(
             self, percep: entorn.Percepcio
     ) -> entorn.Accio | tuple[entorn.Accio, object]:
+        estat = Estat(percep.to_dict())
+
+        if self.__accions is None:
+            self._cerca(estat=estat)
+
+        if len(self.__accions) > 0:
+            return self.__accions.pop()
+        else:
+            return 3  # res
         pass
