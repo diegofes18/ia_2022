@@ -20,3 +20,8 @@ class Rana(joc.Rana):
             self, percep: entorn.Percepcio
     ) -> entorn.Accio | tuple[entorn.Accio, object]:
         pass
+
+
+class Estat():
+    def __init__(self):
+        pass
