@@ -30,11 +30,11 @@ class Estat:
             sum+=abs(self.__pos_pizza[i] - self.__pos_ag[i])
         return self.__pes+sum
 
-    def es_valid(self):
-        if(0<=self.__pos_ag[0]<=7)and(0<=self.__pos_ag[1]<=7):
-            return True
-        else:
-            return False
+    #def es_valid(self):
+     #   if 0<self.__pos_ag[0]<7:
+      #      return True
+       # else:
+        #    return False
 
     def es_meta(self):
         return self.__pos_ag == self.__pos_pizza
@@ -55,8 +55,8 @@ class Estat:
             pos = [sum(tup) for tup in zip(self.__pos_ag, m)]
             cost=self.calculaHeuristica()+COST_DESPL
             actual=Estat(pos, self.__pos_pizza, self.__parets, cost, (self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i]))))
-            if(actual.es_valid()):
-                fills.append(actual)
+            #if(actual.es_valid()):
+            fills.append(actual)
 
         """
         Cas 2: Moviments de desplaçament de 2 caselles en caselles
@@ -67,8 +67,8 @@ class Estat:
             cost = self.calculaHeuristica() + COST_BOTAR
             actual = Estat(pos, self.__pos_pizza, self.__parets, cost,
                            (self, (AccionsRana.BOTAR, Direccio.__getitem__(claus[i]))))
-            if (actual.es_valid()):
-                fills.append(actual)
+            #if (actual.es_valid()):
+            fills.append(actual)
 
         return fills
 
@@ -84,9 +84,9 @@ class Rana(joc.Rana):
     def pinta(self, display):
         pass
 
-    def cerca_prof(self, estat:Estat):
+    def cerca_prof(self, estat: Estat):
         self.__oberts = []
-        self.__tancats = dir()
+        self.__tancats = list()
 
         self.__oberts.append(estat)
 
@@ -96,11 +96,11 @@ class Rana(joc.Rana):
             if actual in self.__tancats:
                 continue
 
-            if not actual.es_valid():
-                self.__tancats.add(actual)
-                continue
+#            if not actual.es_valid():
+ #               self.__tancats.add(actual)
+  #              continue
 
-            estats_fills = actual.genera_fill()
+            estats_fills = actual.generaFills()
 
             if actual.es_meta():
                 break
