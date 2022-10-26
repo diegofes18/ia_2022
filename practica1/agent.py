@@ -10,9 +10,6 @@ from ia_2022 import entorn
 from practica1 import joc
 from entorn import *
 
-COST_ESPERAR=0.5
-COST_BOTAR=6
-COST_DESPL=1
 class Estat:
     def __init__(self,posAgent,posPizza,parets,pes,pare=None):
         self.__pos_ag = posAgent
@@ -39,8 +36,6 @@ class Estat:
     def es_meta(self):
         return self.__pos_ag == self.__pos_pizza
 
-    def getPosAg(self):
-        return self.__pos_ag
     def getPosPizza(self):
         return self.__pos_pizza
     def generaFills(self):
@@ -51,8 +46,8 @@ class Estat:
         """
         Cas 1: Moviments de desplaçament a caselles adjacents.
         """
-        for i,m in enumerate(movs.values()):
-            pos = [sum(tup) for tup in zip(self.__pos_ag, m)]
+        for m,i in enumerate(movs.values()):
+            pos = sum(self.__pos_ag, m)
             cost=self.calculaHeuristica()+COST_DESPL
             actual=Estat(pos, self.__pos_pizza, self.__parets, cost, (self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i]))))
             #if(actual.es_valid()):
@@ -62,8 +57,8 @@ class Estat:
         Cas 2: Moviments de desplaçament de 2 caselles en caselles
         """
         movs = {"ESQUERRE": (0, -2), "DRETA": (0, +2), "DALT": (+2, 0), "BAIX": (0, -2)}
-        for i,m in enumerate(movs.values()):
-            pos = [sum(tup) for tup in zip(self.__pos_ag, m)]
+        for m,i in enumerate(movs.values()):
+            pos = sum(self.__pos_ag, m)
             cost = self.calculaHeuristica() + COST_BOTAR
             actual = Estat(pos, self.__pos_pizza, self.__parets, cost,
                            (self, (AccionsRana.BOTAR, Direccio.__getitem__(claus[i]))))
@@ -130,7 +125,7 @@ class Rana(joc.Rana):
             self, percep: entorn.Percepcio
     ) -> entorn.Accio | tuple[entorn.Accio, object]:
 
-            estat = Estat(percep.to_dict(),posPizza=(3,1), parets=True, pes=0)
+            estat = Estat(self.posicio,posPizza=(3,1), parets=False, pes=0)
 
 
             self.cerca_prof(estat=estat)
