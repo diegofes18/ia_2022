@@ -18,7 +18,6 @@ class Rana(agent_lib.Agent):
         super().__init__(long_memoria=1)
 
         posicio = random.randint(0, 7), random.randint(0, 7)
-
         while posicio in Laberint.PARET:
             posicio = random.randint(0, 7), random.randint(0, 7)
 
@@ -166,7 +165,6 @@ class Laberint(joc.Joc):
 
     def set_menjar(self):
         pos_x, pos_y = random.randint(0, 7), random.randint(0, 7)
-
         while not self.__caselles[pos_x][pos_y].is_lliure():
             pos_x, pos_y = random.randint(0, 7), random.randint(0, 7)
 

@@ -2,68 +2,89 @@
 """
 CONSTANTS PER MOURE I ELS REUS COSTOS
 """
-COST_DESPL=1
-COST_ESPERAR=0.5
-COST_BOTAR=6
+COST_DESPL = 1
+COST_ESPERAR = 0.5
+COST_BOTAR = 6
 
 from ia_2022 import entorn
 from practica1 import joc
-from entorn import *
+from practica1.entorn import ClauPercepcio, AccionsRana, Direccio
+from queue import PriorityQueue
 
 class Estat:
-    def __init__(self,posAgent,posPizza,parets,pes,pare=None):
+    def __init__(self,posPizza,posAgent,parets,pes=0,pare=None):
         self.__pos_ag = posAgent
         self.__pos_pizza = posPizza
         self.__parets = parets
         self.__pes = pes
         self.__pare = pare
 
-    def getPosAg(self):
+    def __eq__(self, other):
+        return self.__pos_ag == other.get_pos_ag()
+    def __lt__(self, other):
+        return False
+    def __hash__(self):
+        return hash(tuple(self.__pos_ag))
+
+    def get_pos_ag(self):
         return self.__pos_ag
 
-    def calculaHeuristica(self):
+    @property
+    def pare(self):
+        return self.__pare
+
+    @pare.setter
+    def pare(self, value):
+        self.__pare = value
+
+
+    def calcula_heuristica(self,string: str):
         sum=0
         for i in range(2):
-            sum+=abs(self.__pos_pizza[i] - self.__pos_ag[i])
+            sum+=abs(self.__pos_pizza[i] - self.__pos_ag[string][i])
         return self.__pes+sum
 
-    #def es_valid(self):
-     #   if 0<self.__pos_ag[0]<7:
-      #      return True
-       # else:
-        #    return False
+    def es_valid(self,string: str):
+        #claus = list(self.__pos_ag.keys())
+        # mirar si hi ha parets
+        for x in self.__parets:
+            if (self.__pos_ag[string][0] == x[0]) and (self.__pos_ag[string][1] == x[1]):
+                return False
 
-    def es_meta(self):
-        return self.__pos_ag == self.__pos_pizza
+        return (self.__pos_ag[string][0] <= 7) and (self.__pos_ag[string][0] >= 0) \
+               and (self.__pos_ag[string][1] <= 7) and (self.__pos_ag[string][1] >= 0)
 
-    def getPosPizza(self):
+    def es_meta(self,string: str):
+        return (self.__pos_ag[string][0] == self.__pos_pizza[0])and(self.__pos_ag[string][1] == self.__pos_pizza[1])
+
+    def get_pos_pizza(self):
         return self.__pos_pizza
-    def generaFills(self):
-        movs={"ESQUERRE":(0,-1),"DRETA":(0,+1),"DALT": (+1,0),"BAIX": (0,-1)}
-        claus=movs.keys()
-        fills=[]
 
-        """
-        Cas 1: Moviments de desplaçament a caselles adjacents.
-        """
-        for m,i in enumerate(movs.values()):
-            pos = sum(self.__pos_ag, m)
-            cost=self.calculaHeuristica()+COST_DESPL
-            actual=Estat(pos, self.__pos_pizza, self.__parets, cost, (self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i]))))
-            #if(actual.es_valid()):
-            fills.append(actual)
+    def genera_fills(self,string: str):
+        fills = []
+        movs={"ESQUERRE":(-1,0),"DRETA":(+1,0), "DALT": (0,-1), "BAIX": (0,+1)}
+        claus=list(movs.keys())
+        for i, m in enumerate(movs.values()):
+            coords = [sum(tup) for tup in zip(self.__pos_ag[string], m)]
+            coord = {string: coords}
+            # coords=[(0,0)]
+            cost = self.__pes + COST_DESPL
+            actual = Estat(self.__pos_pizza, coord, self.__parets, cost,
+                           (self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i]))))
+            if (actual.es_valid(string)):
+                fills.append(actual)
 
-        """
-        Cas 2: Moviments de desplaçament de 2 caselles en caselles
-        """
-        movs = {"ESQUERRE": (0, -2), "DRETA": (0, +2), "DALT": (+2, 0), "BAIX": (0, -2)}
-        for m,i in enumerate(movs.values()):
-            pos = sum(self.__pos_ag, m)
-            cost = self.calculaHeuristica() + COST_BOTAR
-            actual = Estat(pos, self.__pos_pizza, self.__parets, cost,
+
+        movs = {"ESQUERRE": (-2,0),"DRETA": (+2,0), "DALT": (0,-2), "BAIX": (0,+2)}
+        claus = list(movs.keys())
+        for i, m in enumerate(movs.values()):
+            coords = [sum(tup) for tup in zip(self.__pos_ag[string], m)]
+            coord = {string: coords}
+            cost = self.__pes + COST_BOTAR
+            actual = Estat(self.__pos_pizza, coord, self.__parets, cost,
                            (self, (AccionsRana.BOTAR, Direccio.__getitem__(claus[i]))))
-            #if (actual.es_valid()):
-            fills.append(actual)
+            if (actual.es_valid(string)):
+                fills.append(actual)
 
         return fills
 
@@ -75,39 +96,43 @@ class Rana(joc.Rana):
         self.__tancats = None
         self.__oberts = None
         self.__accions = None
+        self.__torn = 0
 
     def pinta(self, display):
         pass
 
-    def cerca_prof(self, estat: Estat):
+    def cerca_prof(self, estat: Estat, string:str):
         self.__oberts = []
-        self.__tancats = list()
+        self.__tancats = set()
 
         self.__oberts.append(estat)
 
         actual = None
         while len(self.__oberts) > 0:
-            actual = self.__oberts.pop()
+
+            actual = self.__oberts[0]
+            self.__oberts = self.__oberts[1:]
             if actual in self.__tancats:
                 continue
 
-#            if not actual.es_valid():
- #               self.__tancats.add(actual)
-  #              continue
+            if not actual.es_valid(string):
+                self.__tancats.add(actual)
+                continue
 
-            estats_fills = actual.generaFills()
+            estats_fills = actual.genera_fills(string)
 
-            if actual.es_meta():
+            if actual.es_meta(string):
                 break
 
             for estat_f in estats_fills:
                 self.__oberts.append(estat_f)
 
             self.__tancats.add(actual)
+
         if actual is None:
             raise ValueError("Error impossible")
 
-        if actual.es_meta():
+        if actual.es_meta(string):
             accions = []
             iterador = actual
 
@@ -121,16 +146,60 @@ class Rana(joc.Rana):
         else:
             return False
 
+    def cerca_heur(self, estat:Estat, string:str):
+        self.__oberts = PriorityQueue()
+        self.__tancats = set()
+
+        self.__oberts.put((estat.calcula_heuristica(string), estat))
+
+        actual = None
+        while not self.__oberts.empty():
+            _, actual = self.__oberts.get()
+            if actual in self.__tancats:
+                continue
+
+            if actual.es_meta(string):
+                break
+
+            estats_fills = actual.genera_fills(string)
+
+            for estat_f in estats_fills:
+                self.__oberts.put((estat_f.calcula_heuristica(string), estat_f))
+
+            self.__tancats.add(actual)
+
+        if actual.es_meta(string):
+            accions = []
+            iterador = actual
+
+            while iterador.pare is not None:
+                pare, accio = iterador.pare
+
+                accions.append(accio)
+                iterador = pare
+            self.__accions = accions
+
     def actua(
             self, percep: entorn.Percepcio
     ) -> entorn.Accio | tuple[entorn.Accio, object]:
 
-            estat = Estat(self.posicio,posPizza=(3,1), parets=False, pes=0)
+            percepciones = percep.to_dict()
+            key = list(percepciones.keys())
+            state = Estat(percep[key[0]],percep[key[1]], percep[key[2]])
 
+            if self.__accions is None:
+                self.cerca_heur(estat=state,string='Miquel')
 
-            self.cerca_prof(estat=estat)
-
-            if len(self.__accions) > 0:
-                return  AccionsRana.MOURE, self.__accions.pop()
+            if self.__accions:
+                if(self.__torn>0):
+                    self.__torn-=1
+                    return AccionsRana.ESPERAR
+                else:
+                    acc=self.__accions.pop()
+                    print("accion:"+str(acc))
+                    if(acc[0]==AccionsRana.BOTAR):
+                        self.__torn=2
+                    #retornam acció i direcció
+                    return acc[0],acc[1]
             else:
                 return AccionsRana.ESPERAR
