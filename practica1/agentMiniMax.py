@@ -12,11 +12,11 @@ from practica1.entorn import ClauPercepcio, AccionsRana, Direccio
 from queue import PriorityQueue
 
 class Estat:
-    def __init__(self,posPizza,posAgent,parets,pes=0,pare=None):
+    def __init__(self,posPizza,posAgent,parets,puntuacio=0,pare=None):
         self.__pos_ag = posAgent
         self.__pos_pizza = posPizza
         self.__parets = parets
-        self.__pes = pes
+        self.__puntuacio = puntuacio
         self.__pare = pare
 
     def __eq__(self, other):
@@ -38,11 +38,8 @@ class Estat:
         self.__pare = value
 
 
-    def calcula_heuristica(self,string: str):
-        sum=0
-        for i in range(2):
-            sum+=abs(self.__pos_pizza[i] - self.__pos_ag[string][i])
-        return self.__pes+sum
+    def calcula_puntuacio(self,string: str):
+        ClauPercepcio
 
     def es_valid(self,string: str):
         #claus = list(self.__pos_ag.keys())

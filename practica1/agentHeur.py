@@ -101,36 +101,28 @@ class Rana(joc.Rana):
     def pinta(self, display):
         pass
 
-    def cerca_prof(self, estat: Estat, string:str):
-        self.__oberts = []
+
+    def cerca_heur(self, estat:Estat, string:str):
+        self.__oberts = PriorityQueue()
         self.__tancats = set()
 
-        self.__oberts.append(estat)
+        self.__oberts.put((estat.calcula_heuristica(string), estat))
 
         actual = None
-        while len(self.__oberts) > 0:
-
-            actual = self.__oberts[0]
-            self.__oberts = self.__oberts[1:]
+        while not self.__oberts.empty():
+            _, actual = self.__oberts.get()
             if actual in self.__tancats:
                 continue
-
-            if not actual.es_valid(string):
-                self.__tancats.add(actual)
-                continue
-
-            estats_fills = actual.genera_fills(string)
 
             if actual.es_meta(string):
                 break
 
+            estats_fills = actual.genera_fills(string)
+
             for estat_f in estats_fills:
-                self.__oberts.append(estat_f)
+                self.__oberts.put((estat_f.calcula_heuristica(string), estat_f))
 
             self.__tancats.add(actual)
-
-        if actual is None:
-            raise ValueError("Error impossible")
 
         if actual.es_meta(string):
             accions = []
@@ -142,10 +134,6 @@ class Rana(joc.Rana):
                 accions.append(accio)
                 iterador = pare
             self.__accions = accions
-            return True
-        else:
-            return False
-
 
     def actua(
             self, percep: entorn.Percepcio
@@ -156,7 +144,7 @@ class Rana(joc.Rana):
             state = Estat(percep[key[0]],percep[key[1]], percep[key[2]])
 
             if self.__accions is None:
-                self.cerca_prof(estat=state,string='Miquel')
+                self.cerca_heur(estat=state,string='Miquel')
 
             if self.__accions:
                 if(self.__torn>0):
