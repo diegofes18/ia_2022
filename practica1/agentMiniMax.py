@@ -2,9 +2,11 @@
 """
 CONSTANTS PER MOURE I ELS REUS COSTOS
 """
+"""
 COST_DESPL = 1
 COST_ESPERAR = 0.5
 COST_BOTAR = 6
+"""
 
 from ia_2022 import entorn
 from practica1 import joc
@@ -37,9 +39,13 @@ class Estat:
     def pare(self, value):
         self.__pare = value
 
+    def point(self, string: str):
+        return ClauPercepcio[string].OLOR
+
 
     def calcula_puntuacio(self,string: str):
-        ClauPercepcio
+
+
 
     def es_valid(self,string: str):
         #claus = list(self.__pos_ag.keys())
@@ -64,9 +70,7 @@ class Estat:
         for i, m in enumerate(movs.values()):
             coords = [sum(tup) for tup in zip(self.__pos_ag[string], m)]
             coord = {string: coords}
-            # coords=[(0,0)]
-            cost = self.__pes + COST_DESPL
-            actual = Estat(self.__pos_pizza, coord, self.__parets, cost,
+            actual = Estat(self.__pos_pizza, coord, self.__parets, 0,
                            (self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i]))))
             if (actual.es_valid(string)):
                 fills.append(actual)
@@ -77,8 +81,7 @@ class Estat:
         for i, m in enumerate(movs.values()):
             coords = [sum(tup) for tup in zip(self.__pos_ag[string], m)]
             coord = {string: coords}
-            cost = self.__pes + COST_BOTAR
-            actual = Estat(self.__pos_pizza, coord, self.__parets, cost,
+            actual = Estat(self.__pos_pizza, coord, self.__parets, 0,
                            (self, (AccionsRana.BOTAR, Direccio.__getitem__(claus[i]))))
             if (actual.es_valid(string)):
                 fills.append(actual)
@@ -98,51 +101,22 @@ class Rana(joc.Rana):
     def pinta(self, display):
         pass
 
-    def cerca_prof(self, estat: Estat, string:str):
-        self.__oberts = []
-        self.__tancats = set()
+    def minimax(self, estat:Estat, turno_max: bool, recurs: int):
 
-        self.__oberts.append(estat)
-
-        actual = None
-        while len(self.__oberts) > 0:
-
-            actual = self.__oberts[0]
-            self.__oberts = self.__oberts[1:]
-            if actual in self.__tancats:
-                continue
-
-            if not actual.es_valid(string):
-                self.__tancats.add(actual)
-                continue
-
-            estats_fills = actual.genera_fills(string)
-
-            if actual.es_meta(string):
-                break
-
-            for estat_f in estats_fills:
-                self.__oberts.append(estat_f)
-
-            self.__tancats.add(actual)
-
-        if actual is None:
-            raise ValueError("Error impossible")
-
-        if actual.es_meta(string):
-            accions = []
-            iterador = actual
-
-            while iterador.pare is not None:
-                pare, accio = iterador.pare
-
-                accions.append(accio)
-                iterador = pare
-            self.__accions = accions
-            return True
+        if self.nom == 'Miquel':
+            nom_rana = 'Miquel'
         else:
-            return False
+            nom_rana = 'Diego'
 
+        score = estat.calcula_puntuacio(nom_rana)
+        if recurs == 5 or estat.es_meta(nom_rana):
+            return score
+
+        point_fills = [self.minimax(estat_fill, not turno_max, recurs+1) for estat_fill in estat.genera_fills(nom_rana)]
+        if turno_max:
+            return max(point_fills)
+        else:
+            return min(point_fills)
 
     def actua(
             self, percep: entorn.Percepcio
