@@ -2,21 +2,23 @@
 """
 CONSTANTS PER MOURE I ELS REUS COSTOS
 """
+"""
 COST_DESPL = 1
 COST_ESPERAR = 0.5
 COST_BOTAR = 6
+"""
 
 from ia_2022 import entorn
 from practica1 import joc
 from practica1.entorn import ClauPercepcio, AccionsRana, Direccio
-from queue import PriorityQueue
 
 class Estat:
-    def __init__(self,posPizza,posAgent,parets,pes=0,pare=None):
+    def __init__(self,posPizza,posAgent,parets, nom_Max, puntuacio=0,pare=None):
         self.__pos_ag = posAgent
+        self.__nom_max = nom_Max
         self.__pos_pizza = posPizza
         self.__parets = parets
-        self.__pes = pes
+        self.__puntuacio = puntuacio
         self.__pare = pare
 
     def __eq__(self, other):
@@ -28,62 +30,85 @@ class Estat:
 
     def get_pos_ag(self):
         return self.__pos_ag
+    def get_othername(self):
+        claves = list(self.__pos_ag.keys())
+        if self.__nom_max == claves[0]:
+            return claves[1]
+        else:
+            return claves[0]
 
     @property
     def pare(self):
         return self.__pare
-
+    def get_pos_ag2(self):
+        return list(self.__pos_ag.keys())[1]
     @pare.setter
     def pare(self, value):
         self.__pare = value
 
-
-    def calcula_heuristica(self,string: str):
-        sum=0
+    def point(self, clave):
+        sum1 = 0
         for i in range(2):
-            sum+=abs(self.__pos_pizza[i] - self.__pos_ag[string][i])
-        return self.__pes+sum
+            sum1 += abs(self.__pos_pizza[i] - self.__pos_ag[clave][i])
 
-    def es_valid(self,string: str):
-        #claus = list(self.__pos_ag.keys())
+        return sum1
+
+    def calcula_puntuacio(self):
+
+        claves = list(self.__pos_ag.keys())
+
+        if self.__nom_max == claves[0]:
+            return self.point(claves[1])-self.point(claves[0])
+        else:
+            return self.point(claves[0])-self.point(claves[1])
+
+
+    def es_valid(self):
         # mirar si hi ha parets
+
         for x in self.__parets:
-            if (self.__pos_ag[string][0] == x[0]) and (self.__pos_ag[string][1] == x[1]):
+
+            if (self.__pos_ag[self.get_othername()][0] == x[0]) and (self.__pos_ag[self.get_othername()][1] == x[1]):
                 return False
 
-        return (self.__pos_ag[string][0] <= 7) and (self.__pos_ag[string][0] >= 0) \
-               and (self.__pos_ag[string][1] <= 7) and (self.__pos_ag[string][1] >= 0)
+        return (self.__pos_ag[self.get_othername()][0] <= 7) and (self.__pos_ag[self.get_othername()][0] >= 0) \
+               and (self.__pos_ag[self.get_othername()][1] <= 7) and (self.__pos_ag[self.get_othername()][1] >= 0)
 
-    def es_meta(self,string: str):
-        return (self.__pos_ag[string][0] == self.__pos_pizza[0])and(self.__pos_ag[string][1] == self.__pos_pizza[1])
+    def es_meta(self):
+        return (self.__pos_ag[self.get_othername()][0] == self.__pos_pizza[0])and(self.__pos_ag[self.get_othername()][1] == self.__pos_pizza[1])
 
     def get_pos_pizza(self):
         return self.__pos_pizza
 
-    def genera_fills(self,string: str):
+    def genera_fills(self):
+        claves = list(self.__pos_ag.keys())
+        if self.__nom_max == claves[0]:
+            nom_rana = claves[1]
+        else:
+            nom_rana = claves[0]
+
         fills = []
         movs={"ESQUERRE":(-1,0),"DRETA":(+1,0), "DALT": (0,-1), "BAIX": (0,+1)}
         claus=list(movs.keys())
         for i, m in enumerate(movs.values()):
-            coords = [sum(tup) for tup in zip(self.__pos_ag[string], m)]
-            coord = {string: coords}
-            # coords=[(0,0)]
-            cost = self.__pes + COST_DESPL
-            actual = Estat(self.__pos_pizza, coord, self.__parets, cost,
+            coords = [sum(tup) for tup in zip(self.__pos_ag[self.__nom_max], m)]
+            #coord = {self.__nom_max: coords}
+            self.__pos_ag[self.__nom_max]=coords
+            actual = Estat(self.__pos_pizza, self.__pos_ag, self.__parets, nom_rana, 0,
                            (self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i]))))
-            if (actual.es_valid(string)):
+            if (actual.es_valid()):
                 fills.append(actual)
 
 
         movs = {"ESQUERRE": (-2,0),"DRETA": (+2,0), "DALT": (0,-2), "BAIX": (0,+2)}
         claus = list(movs.keys())
         for i, m in enumerate(movs.values()):
-            coords = [sum(tup) for tup in zip(self.__pos_ag[string], m)]
-            coord = {string: coords}
-            cost = self.__pes + COST_BOTAR
-            actual = Estat(self.__pos_pizza, coord, self.__parets, cost,
+            coords = [sum(tup) for tup in zip(self.__pos_ag[self.__nom_max], m)]
+            #coord = {self.__nom_max: coords}
+            self.__pos_ag[self.__nom_max]=coords
+            actual = Estat(self.__pos_pizza, self.__pos_ag, self.__parets, nom_rana, 0,
                            (self, (AccionsRana.BOTAR, Direccio.__getitem__(claus[i]))))
-            if (actual.es_valid(string)):
+            if (actual.es_valid()):
                 fills.append(actual)
 
         return fills
@@ -93,59 +118,25 @@ class Estat:
 class Rana(joc.Rana):
     def __init__(self, *args, **kwargs):
         super(Rana, self).__init__(*args, **kwargs)
-        self.__tancats = None
-        self.__oberts = None
         self.__accions = None
         self.__torn = 0
 
     def pinta(self, display):
         pass
 
-    def cerca_prof(self, estat: Estat, string:str):
-        self.__oberts = []
-        self.__tancats = set()
+    def minimax(self, estat:Estat, turno_max: bool, recurs: int):
 
-        self.__oberts.append(estat)
+        score = estat.calcula_puntuacio()
+        if recurs == 2 or estat.es_meta():
+            return score, estat
 
-        actual = None
-        while len(self.__oberts) > 0:
-
-            actual = self.__oberts[0]
-            self.__oberts = self.__oberts[1:]
-            if actual in self.__tancats:
-                continue
-
-            if not actual.es_valid(string):
-                self.__tancats.add(actual)
-                continue
-
-            estats_fills = actual.genera_fills(string)
-
-            if actual.es_meta(string):
-                break
-
-            for estat_f in estats_fills:
-                self.__oberts.append(estat_f)
-
-            self.__tancats.add(actual)
-
-        if actual is None:
-            raise ValueError("Error impossible")
-
-        if actual.es_meta(string):
-            accions = []
-            iterador = actual
-
-            while iterador.pare is not None:
-                pare, accio = iterador.pare
-
-                accions.append(accio)
-                iterador = pare
-            self.__accions = accions
-            return True
+        point_fills = [self.minimax(estat_fill, not turno_max, recurs+1) for estat_fill in estat.genera_fills()]
+        punto = point_fills
+        print(punto)
+        if turno_max:
+            return max(punto)
         else:
-            return False
-
+            return min(punto)
 
     def actua(
             self, percep: entorn.Percepcio
@@ -153,10 +144,23 @@ class Rana(joc.Rana):
 
             percepciones = percep.to_dict()
             key = list(percepciones.keys())
-            state = Estat(percep[key[0]],percep[key[1]], percep[key[2]])
+            inicia = (list(percep[key[1]].keys())[0])
+            state = Estat(percep[key[0]], percep[key[1]], percep[key[2]], inicia)
+
 
             if self.__accions is None:
-                self.cerca_prof(estat=state,string='Miquel')
+
+                self.minimax(estat=state, turno_max=True, recurs=0)
+                print("hola")
+            accions = []
+            iterador = state
+
+            while iterador.pare is not None:
+                pare, accio = iterador.pare
+
+                accions.append(accio)
+                iterador = pare
+            self.__accions = accions
 
             if self.__accions:
                 if(self.__torn>0):

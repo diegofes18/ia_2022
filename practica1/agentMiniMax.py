@@ -42,13 +42,14 @@ class Estat:
     def point(self, string: str):
         return ClauPercepcio[string].OLOR
 
-
     def calcula_puntuacio(self,string: str):
-
+        if string == 'Miquel':
+            return self.point('Diego') - self.point('Miquel')
+        else:
+            return self.point('Miquel') - self.point('Diego')
 
 
     def es_valid(self,string: str):
-        #claus = list(self.__pos_ag.keys())
         # mirar si hi ha parets
         for x in self.__parets:
             if (self.__pos_ag[string][0] == x[0]) and (self.__pos_ag[string][1] == x[1]):
@@ -110,13 +111,14 @@ class Rana(joc.Rana):
 
         score = estat.calcula_puntuacio(nom_rana)
         if recurs == 5 or estat.es_meta(nom_rana):
-            return score
+            return score, estat
 
         point_fills = [self.minimax(estat_fill, not turno_max, recurs+1) for estat_fill in estat.genera_fills(nom_rana)]
+
         if turno_max:
-            return max(point_fills)
+            return max(point_fills),estat
         else:
-            return min(point_fills)
+            return min(point_fills),estat
 
     def actua(
             self, percep: entorn.Percepcio
@@ -127,7 +129,17 @@ class Rana(joc.Rana):
             state = Estat(percep[key[0]],percep[key[1]], percep[key[2]])
 
             if self.__accions is None:
-                self.cerca_prof(estat=state,string='Miquel')
+                self.minimax(estat=state, turno_max=True, recurs=0)
+
+            accions = []
+            iterador = state
+
+            while iterador.pare is not None:
+                pare, accio = iterador.pare
+
+                accions.append(accio)
+                iterador = pare
+            self.__accions = accions
 
             if self.__accions:
                 if(self.__torn>0):
