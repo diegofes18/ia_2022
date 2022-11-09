@@ -92,7 +92,7 @@ class Estat:
         claus=list(movs.keys())
         for i, m in enumerate(movs.values()):
             coords = [sum(tup) for tup in zip(self.__pos_ag[self.__nom_max], m)]
-            coord = {self.__nom_max: coords}
+            #coord = {self.__nom_max: coords}
             self.__pos_ag[self.__nom_max]=coords
             print(self.__pos_ag)
             print(m)

@@ -20,7 +20,10 @@ class Rana(agent_lib.Agent):
         posicio = random.randint(0, 7), random.randint(0, 7)
         while posicio in Laberint.PARET:
             posicio = random.randint(0, 7), random.randint(0, 7)
-
+        if (nom=="Diego"):
+            posicio = 2,3
+        else:
+            posicio = 0,5
         self.__posicio = posicio
         self.__botant = 0
         self.__dir_bot = None
@@ -168,6 +171,8 @@ class Laberint(joc.Joc):
         while not self.__caselles[pos_x][pos_y].is_lliure():
             pos_x, pos_y = random.randint(0, 7), random.randint(0, 7)
 
+        pos_x = 3
+        pos_y = 5
         self.__caselles[pos_x][pos_y].push_menjar()
 
         return pos_x, pos_y
