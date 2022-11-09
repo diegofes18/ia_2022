@@ -62,6 +62,7 @@ class Estat:
 
     def genera_fills(self,string: str):
         fills = []
+        print(str(self.__pos_ag)+": pos padre")
         #Moviments
         movs={"ESQUERRE":(-1,0),"DRETA":(+1,0), "DALT": (0,-1), "BAIX": (0,+1)}
         claus=list(movs.keys())
@@ -69,6 +70,7 @@ class Estat:
             coords = [sum(tup) for tup in zip(self.__pos_ag[string], m)]
             coord = {string: coords}
             cost = self.__pes + COST_DESPL
+            print(coord)
             actual = Estat(self.__pos_pizza, coord, self.__parets, cost,
                            (self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i]))))
             if (actual.es_valid(string)):
@@ -81,6 +83,7 @@ class Estat:
             coords = [sum(tup) for tup in zip(self.__pos_ag[string], m)]
             coord = {string: coords}
             cost = self.__pes + COST_BOTAR
+            print(coord)
             actual = Estat(self.__pos_pizza, coord, self.__parets, cost,
                            (self, (AccionsRana.BOTAR, Direccio.__getitem__(claus[i]))))
             if (actual.es_valid(string)):

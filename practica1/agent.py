@@ -86,14 +86,16 @@ class Estat:
             nom_rana = claves[1]
         else:
             nom_rana = claves[0]
-
+        print("nom max:    "+str(self.__nom_max)+" ->posicion: "+str(self.__pos_ag))
         fills = []
         movs={"ESQUERRE":(-1,0),"DRETA":(+1,0), "DALT": (0,-1), "BAIX": (0,+1)}
         claus=list(movs.keys())
         for i, m in enumerate(movs.values()):
             coords = [sum(tup) for tup in zip(self.__pos_ag[self.__nom_max], m)]
-            #coord = {self.__nom_max: coords}
+            coord = {self.__nom_max: coords}
             self.__pos_ag[self.__nom_max]=coords
+            print(self.__pos_ag)
+            print(m)
             actual = Estat(self.__pos_pizza, self.__pos_ag, self.__parets, nom_rana, 0,
                            (self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i]))))
             if (actual.es_valid()):
@@ -103,9 +105,11 @@ class Estat:
         movs = {"ESQUERRE": (-2,0),"DRETA": (+2,0), "DALT": (0,-2), "BAIX": (0,+2)}
         claus = list(movs.keys())
         for i, m in enumerate(movs.values()):
+            print(m)
             coords = [sum(tup) for tup in zip(self.__pos_ag[self.__nom_max], m)]
-            #coord = {self.__nom_max: coords}
+            coord = {self.__nom_max: coords}
             self.__pos_ag[self.__nom_max]=coords
+            print(self.__pos_ag)
             actual = Estat(self.__pos_pizza, self.__pos_ag, self.__parets, nom_rana, 0,
                            (self, (AccionsRana.BOTAR, Direccio.__getitem__(claus[i]))))
             if (actual.es_valid()):
@@ -127,12 +131,12 @@ class Rana(joc.Rana):
     def minimax(self, estat:Estat, turno_max: bool, recurs: int):
 
         score = estat.calcula_puntuacio()
-        if recurs == 2 or estat.es_meta():
+        if recurs == 5 or estat.es_meta():
             return score, estat
-
+        #[print(self.minimax(estat_fill, not turno_max, recurs + 1)) for estat_fill in estat.genera_fills()]
         point_fills = [self.minimax(estat_fill, not turno_max, recurs+1) for estat_fill in estat.genera_fills()]
         punto = point_fills
-        print(punto)
+        #print(punto)
         if turno_max:
             return max(punto)
         else:
@@ -148,12 +152,13 @@ class Rana(joc.Rana):
             state = Estat(percep[key[0]], percep[key[1]], percep[key[2]], inicia)
 
 
-            if self.__accions is None:
+            #if self.__accions is None:
 
-                self.minimax(estat=state, turno_max=True, recurs=0)
-                print("hola")
+            now = self.minimax(estat=state, turno_max=True, recurs=0)
+            print("hola")
+
             accions = []
-            iterador = state
+            iterador = now[1]
 
             while iterador.pare is not None:
                 pare, accio = iterador.pare
