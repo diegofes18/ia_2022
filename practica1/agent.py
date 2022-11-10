@@ -32,11 +32,13 @@ class Estat:
         return self.__pos_ag
 
     def get_othername(self):
-        claves = list(self.__pos_ag.keys())
-        if self.__nom_max == claves[0]:
-            return claves[1]
-        else:
-            return claves[0]
+        claus = list(self.__pos_ag.keys())  # {Miquel: (),Diego: ();
+
+        for i in range(2):
+            if (self.__nom_max != claus[i]):
+                return claus[i]
+
+        return None
 
     @property
     def pare(self):
@@ -49,15 +51,15 @@ class Estat:
         self.__pare = value
 
     def point(self, clave):
-        sum1 = 0
+        sum = 0
         for i in range(2):
-            sum1 += abs(self.__pos_pizza[i] - self.__pos_ag[clave][i])
-        return sum1
+            sum += abs(self.__pos_pizza[i] - self.__pos_ag[clave][i])
+        return sum
 
-    def calcula_puntuacio(self):
+    def calcula_puntuacio(self,nom):
         claves = list(self.__pos_ag.keys())
 
-        if self.__nom_max == claves[0]:
+        if nom == claves[0]:
             return self.point(claves[1])-self.point(claves[0])
         else:
             return self.point(claves[0])-self.point(claves[1])
@@ -69,11 +71,16 @@ class Estat:
             if (self.__pos_ag[self.get_othername()][0] == x[0]) and (self.__pos_ag[self.get_othername()][1] == x[1]):
                 return False
 
+        if (self.__pos_ag[self.get_othername()][0] == self.__pos_ag[self.__nom_max][0]):  # mateixa fila??
+            if (self.__pos_ag[self.get_othername()][1] == self.__pos_ag[self.__nom_max][1]):  # mateixa columna??
+                return False
+
         return (self.__pos_ag[self.get_othername()][0] <= 7) and (self.__pos_ag[self.get_othername()][0] >= 0) \
                and (self.__pos_ag[self.get_othername()][1] <= 7) and (self.__pos_ag[self.get_othername()][1] >= 0)
 
-    def es_meta(self):
-        return (self.__pos_ag[self.get_othername()][0] == self.__pos_pizza[0])and(self.__pos_ag[self.get_othername()][1] == self.__pos_pizza[1])
+    def es_meta(self,nom):
+        return (self.__pos_ag[nom][0] == self.__pos_pizza[0]) \
+               and (self.__pos_ag[nom][1] == self.__pos_pizza[1])
 
     def get_pos_pizza(self):
         return self.__pos_pizza
@@ -90,12 +97,12 @@ class Estat:
         movs={"ESQUERRE":(-1,0),"DRETA":(+1,0), "DALT": (0,-1), "BAIX": (0,+1)}
         claus=list(movs.keys())
         for i, m in enumerate(movs.values()):
-            t = self.__pos_ag.copy()
-            coords = [sum(tup) for tup in zip(t[self.__nom_max], m)]
-            #coord = {self.__nom_max: coords}
 
+            coords = [sum(tup) for tup in zip(self.__pos_ag[self.__nom_max], m)]
+            #coord = {self.__nom_max: coords}
+            t = self.__pos_ag.copy()
             t[self.__nom_max]=coords
-            print(self.__pos_ag)
+            print(t)
             print(m)
             actual = Estat(self.__pos_pizza, t, self.__parets, nom_rana, 0,
                            (self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i]))))
@@ -106,11 +113,12 @@ class Estat:
         movs = {"ESQUERRE": (-2,0),"DRETA": (+2,0), "DALT": (0,-2), "BAIX": (0,+2)}
         claus = list(movs.keys())
         for i, m in enumerate(movs.values()):
-            t2 = self.__pos_ag.copy()
-            coords = [sum(tup) for tup in zip(t2[self.__nom_max], m)]
+
+            coords = [sum(tup) for tup in zip(self.__pos_ag[self.__nom_max], m)]
             #coord = {self.__nom_max: coords}
+            t2 = self.__pos_ag.copy()
             t2[self.__nom_max]=coords
-            print(self.__pos_ag)
+            print(t2)
             actual = Estat(self.__pos_pizza, t2, self.__parets, nom_rana, 0,
                            (self, (AccionsRana.BOTAR, Direccio.__getitem__(claus[i]))))
             if (actual.es_valid()):
@@ -121,6 +129,7 @@ class Estat:
 
 
 class Rana(joc.Rana):
+    META=0
     def __init__(self, *args, **kwargs):
         super(Rana, self).__init__(*args, **kwargs)
         self.__torn = 0
@@ -130,8 +139,8 @@ class Rana(joc.Rana):
 
     def minimax(self, estat:Estat, turno_max: bool, recurs: int):
 
-        score = estat.calcula_puntuacio()
-        if recurs == 2 or estat.es_meta():
+        score = estat.calcula_puntuacio(self.nom)
+        if recurs == 2 or estat.es_meta(self.nom):
             return score, estat
         #[print(self.minimax(estat_fill, not turno_max, recurs + 1)) for estat_fill in estat.genera_fills()]
         point_fills = [self.minimax(estat_fill, not turno_max, recurs+1) for estat_fill in estat.genera_fills()]
@@ -141,39 +150,61 @@ class Rana(joc.Rana):
         else:
             return min(point_fills)
 
+    def max(self, llista):
+        max = 0
+        element = None
+        for e in llista:
+            if (e[1] > max):
+                max = e[1]
+                element = e
+
+        return max, element
+
+    def min(self, llista):
+        min = 9999
+        element = None
+        for e in llista:
+            if (e[1] < min):
+                min = e[1]
+                element = e
+
+        return min, element
+
     def actua(
             self, percep: entorn.Percepcio
     ) -> entorn.Accio | tuple[entorn.Accio, object]:
 
             percepciones = percep.to_dict()
             key = list(percepciones.keys())
-            inicia = (list(percep[key[1]].keys())[0])
-            state = Estat(percep[key[0]], percep[key[1]], percep[key[2]], inicia)
-
+            #inicia = (list(percep[key[1]].keys())[0])
+            state = Estat(percep[key[0]], percep[key[1]], percep[key[2]], self.nom)
 
             #if self.__accions is None:
 
             now = self.minimax(estat=state, turno_max=True, recurs=0)
 
+            agents=percep[key[1]].keys()
+            for a in agents:
+                if (percep[key[1]][a] == percep[key[0]]):
+                    self.META = 1
 
-            accions = []
+                #accions = []
+
+            if self.META==1:
+                return AccionsRana.ESPERAR
+
             iterador = now[1]
 
             while iterador.pare is not None:
                 pare, accio = iterador.pare
-
-
                 iterador = pare
-
-
-
-                if(self.__torn>0):
-                    self.__torn-=1
-                    return AccionsRana.ESPERAR
-                else:
-                    print("accion:"+str(accio))
-                    if(accio[0]==AccionsRana.BOTAR):
-                        self.__torn=2
+            if(self.__torn>0):
+                self.__torn-=1
+                return AccionsRana.ESPERAR
+            else:
+                #print("accion:"+str(accio))
+                if(accio[0]==AccionsRana.BOTAR):
+                    self.__torn=2
                     #retornam acció i direcció
-                    return accio[0],accio[1]
+                return accio[0],accio[1]
 
