@@ -10,29 +10,20 @@ from ia_2022 import entorn
 from practica1 import joc
 from practica1.entorn import ClauPercepcio, AccionsRana, Direccio
 from queue import PriorityQueue
-import random
+import time
 
 class Estat:
-    def __init__(self,posPizza,posAgent,parets,individu,pes=0,pare=None, valor=None):
+    def __init__(self,posPizza,posAgent,parets,pes=0,pare=None):
         self.__pos_ag = posAgent
-        self.__individu = individu
         self.__pos_pizza = posPizza
         self.__parets = parets
         self.__pes = pes
         self.__pare = pare
-        self.__valor = valor
-        print(self.__individu)
-        #self.aplica_mov("Miquel")
 
     def __eq__(self, other):
-        return self.__valor == other.get_valor()
+        return self.__pos_ag == other.get_pos_ag()
     def __lt__(self, other):
-        return self.__valor < other.get_valor()
-    def get_valor(self):
-        return self.__valor
-    def get_camino(self):
-        return self.__individu
-
+        return False
     def __hash__(self):
         return hash(tuple(self.__pos_ag))
 
@@ -46,60 +37,6 @@ class Estat:
     @pare.setter
     def pare(self, value):
         self.__pare = value
-
-    def calc_fitness(self, string:str):
-        #distancia a la que llega
-
-        suma = list((0,0))
-
-        dist = 0
-        for e in self.__individu:
-
-            suma[0] += e[0]
-            suma[1] += e[1]
-            #print(suma)
-            for x in self.__parets:
-                if (suma[0] == x[0]) and (suma[1] == x[1]):
-                    dist += 1000
-            if not ( (suma[0] <= 7) and (suma[0] >= 0) and (suma[1] <= 7) and (suma[1] >= 0) ):
-                dist += 1000
-
-        #distancia a la pizza
-
-        for i in range(2):
-            dist += abs(self.__pos_pizza[i] - suma[i])
-
-        self.__valor=dist
-
-    def crossover(self, other):
-        print("padre cam:" + str(self.get_camino()))
-        print("madre cam:" + str(other.get_camino()))
-        cross_point = random.randint(0, len(self.__individu))
-        sub_hijo1 = self.__individu[:cross_point]
-        sub_hijo2 = other.__individu[cross_point:]
-        sub_hijo1.extend(sub_hijo2)
-
-        hijos = []
-
-        movs = {"ESQUERRE": (-1, 0), "DRETA": (+1, 0), "DALT": (0, -1), "BAIX": (0, +1)}
-        claus = list(movs.keys())
-        for i, m in enumerate(movs.values()):
-            h = []
-            h = sub_hijo1.copy()
-            h.append(m)
-            hijos.append(Estat(self.__pos_pizza, self.__pos_ag, self.__parets, h,
-                                        pare=(self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i])))))
-
-        movs = {"ESQUERRE": (-2, 0), "DRETA": (+2, 0), "DALT": (0, -2), "BAIX": (0, +2)}
-        claus = list(movs.keys())
-        for i, m in enumerate(movs.values()):
-            h = []
-            h = sub_hijo1.copy()
-            h.append(m)
-            hijos.append(Estat(self.__pos_pizza, self.__pos_ag, self.__parets, h,
-                               pare=(self, (AccionsRana.BOTAR, Direccio.__getitem__(claus[i])))))
-
-        return hijos
 
 
     def calcula_heuristica(self,string: str):
@@ -119,40 +56,46 @@ class Estat:
                and (self.__pos_ag[string][1] <= 7) and (self.__pos_ag[string][1] >= 0)
 
     def es_meta(self,string: str):
-        return self.__valor==0
+        return (self.__pos_ag[string][0] == self.__pos_pizza[0])and(self.__pos_ag[string][1] == self.__pos_pizza[1])
 
     def get_pos_pizza(self):
         return self.__pos_pizza
 
-    def genera_init(self):
+    def genera_fills(self,string: str):
+        fills = []
+        movs={"ESQUERRE":(-1,0),"DRETA":(+1,0), "DALT": (0,-1), "BAIX": (0,+1)}
+        claus=list(movs.keys())
+        for i, m in enumerate(movs.values()):
+            coords = [sum(tup) for tup in zip(self.__pos_ag[string], m)]
+            coord = {string: coords}
+            # coords=[(0,0)]
+            cost = self.__pes + COST_DESPL
+            actual = Estat(self.__pos_pizza, coord, self.__parets, cost,
+                           (self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i]))))
+            if (actual.es_valid(string)):
+                fills.append(actual)
 
-        poblacion_init = []
 
-        movs = {"ESQUERRE": (-1, 0), "DRETA": (+1, 0), "DALT": (0, -1), "BAIX": (0, +1)}
-        claus = list(movs.keys())
-        for i,m in enumerate(movs.values()):
-            h = []
-            h.append(self.__individu[0])
-            h.append(m)
-            poblacion_init.append(Estat(self.__pos_pizza, self.__pos_ag, self.__parets,h,
-                       pare=(self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i])))) )
-
-        movs = {"ESQUERRE": (-2, 0), "DRETA": (+2, 0), "DALT": (0, -2), "BAIX": (0, +2)}
+        movs = {"ESQUERRE": (-2,0),"DRETA": (+2,0), "DALT": (0,-2), "BAIX": (0,+2)}
         claus = list(movs.keys())
         for i, m in enumerate(movs.values()):
-            h = []
-            h.append(self.__individu[0])
-            h.append(m)
-            poblacion_init.append(Estat(self.__pos_pizza, self.__pos_ag, self.__parets, h,
-                                   pare=(self, (AccionsRana.BOTAR, Direccio.__getitem__(claus[i])))))
+            coords = [sum(tup) for tup in zip(self.__pos_ag[string], m)]
+            coord = {string: coords}
+            cost = self.__pes + COST_BOTAR
+            actual = Estat(self.__pos_pizza, coord, self.__parets, cost,
+                           (self, (AccionsRana.BOTAR, Direccio.__getitem__(claus[i]))))
+            if (actual.es_valid(string)):
+                fills.append(actual)
 
-        return poblacion_init
+        return fills
+
 
 
 class Rana(joc.Rana):
     def __init__(self, *args, **kwargs):
         super(Rana, self).__init__(*args, **kwargs)
-
+        self.__tancats = None
+        self.__oberts = None
         self.__accions = None
         self.__torn = 0
 
@@ -160,54 +103,38 @@ class Rana(joc.Rana):
         pass
 
 
+    def cerca_heur(self, estat:Estat, string:str):
+        self.__oberts = PriorityQueue()
+        self.__tancats = set()
 
-    def cerca_Genetic(self, estat: Estat, string:str):
-        poblacion = estat.genera_init()
-        cola = PriorityQueue()
-        print("posicion pizza"+str(estat.get_pos_pizza()))
-        #print(poblacion)
-        while len(poblacion)>0:
+        self.__oberts.put((estat.calcula_heuristica(string), estat))
 
-            for p in poblacion:
-                #print(p)
-                p.calc_fitness(string)
-                print(str(p)+" valor:"+str(p.get_valor())+", su camino"+str(p.get_camino()))
-                if(p.get_valor()<1000):
-                    cola.put(p)
+        actual = None
+        while not self.__oberts.empty():
+            _, actual = self.__oberts.get()
+            if actual in self.__tancats:
+                continue
 
-            #enseñamos la cola
-            for i in range(cola.qsize()):
-                print(list(cola.queue)[i])
+            if actual.es_meta(string):
+                break
 
-            padre = cola.get()
-            cola.put(padre)
-            print(str(padre) + " valor padre:" + str(padre.get_valor()))
-            #print(puntuaciones)
-            madre = cola.get()
-            cola.put(madre)
-            print(str(madre) + " valor madre:" + str(madre.get_valor()))
-            poblacion=(padre.crossover(madre))
-            for p in poblacion:
-                p.calc_fitness(string)
-                print(str(p) + " valor:" + str(p.get_valor()) + ", su camino" + str(p.get_camino()))
-                if (p.get_valor() < 1000):
-                    cola.put(p)
+            estats_fills = actual.genera_fills(string)
 
-            for i in range(cola.qsize()):
-                p = (list(cola.queue)[i])
-                if p.es_meta(string):
-                    accions = []
-                    iterador = p
+            for estat_f in estats_fills:
+                self.__oberts.put((estat_f.calcula_heuristica(string), estat_f))
 
-                    while iterador.pare is not None:
-                        pare, accio = iterador.pare
+            self.__tancats.add(actual)
 
-                        accions.append(accio)
-                        iterador = pare
-                    self.__accions = accions
-                    return True
+        if actual.es_meta(string):
+            accions = []
+            iterador = actual
 
+            while iterador.pare is not None:
+                pare, accio = iterador.pare
 
+                accions.append(accio)
+                iterador = pare
+            self.__accions = accions
 
     def actua(
             self, percep: entorn.Percepcio
@@ -215,12 +142,12 @@ class Rana(joc.Rana):
 
             percepciones = percep.to_dict()
             key = list(percepciones.keys())
-            indiv = []
-            indiv.append(percep[key[1]][self.nom])
-            state = Estat(percep[key[0]],percep[key[1]], percep[key[2]],indiv)
+            state = Estat(percep[key[0]],percep[key[1]], percep[key[2]])
 
             if self.__accions is None:
-                self.cerca_Genetic(estat=state,string='Miquel')
+                t = (time.time() * 1000)
+                self.cerca_heur(estat=state,string='Miquel')
+                print((time.time() * 1000) - t)
 
             if self.__accions:
                 if(self.__torn>0):

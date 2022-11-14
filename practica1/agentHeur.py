@@ -10,6 +10,7 @@ from ia_2022 import entorn
 from practica1 import joc
 from practica1.entorn import ClauPercepcio, AccionsRana, Direccio
 from queue import PriorityQueue
+import time
 
 class Estat:
     def __init__(self,posPizza,posAgent,parets,pes=0,pare=None):
@@ -144,7 +145,9 @@ class Rana(joc.Rana):
             state = Estat(percep[key[0]],percep[key[1]], percep[key[2]])
 
             if self.__accions is None:
+                t = (time.time() * 1000)
                 self.cerca_heur(estat=state,string='Miquel')
+                print((time.time() * 1000) - t)
 
             if self.__accions:
                 if(self.__torn>0):
