@@ -76,7 +76,7 @@ class Estat:
         print("madre cam:" + str(other.get_camino()))
         cross_point = random.randint(0, len(self.__individu))
         sub_hijo1 = self.__individu[:cross_point]
-        sub_hijo2 = other.__individu[cross_point:]
+        sub_hijo2 = other.cami[cross_point:]
         sub_hijo1.extend(sub_hijo2)
 
         hijos = []
@@ -101,6 +101,41 @@ class Estat:
 
         return hijos
 
+    def crossover2(self, other):
+        print("padre cam:" + str(self.get_camino()))
+        print("madre cam:" + str(other.get_camino()))
+
+        hijos = []
+
+        movs = {"ESQUERRE": (-1, 0), "DRETA": (+1, 0), "DALT": (0, -1), "BAIX": (0, +1)}
+        claus = list(movs.keys())
+        for i, m in enumerate(movs.values()):
+            cross_point = random.randint(0, len(self.__individu))
+            sub_hijo1 = self.__individu[:cross_point]
+            sub_hijo2 = other.cami[cross_point:]
+            sub_hijo1.extend(sub_hijo2)
+
+            h = []
+            h = sub_hijo1.copy()
+            h.append(m)
+            hijos.append(Estat(self.__pos_pizza, self.__pos_ag, self.__parets, h,
+                                        pare=(self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i])))))
+
+        movs = {"ESQUERRE": (-2, 0), "DRETA": (+2, 0), "DALT": (0, -2), "BAIX": (0, +2)}
+        claus = list(movs.keys())
+        for i, m in enumerate(movs.values()):
+            cross_point = random.randint(0, len(self.__individu))
+            sub_hijo1 = self.__individu[:cross_point]
+            sub_hijo2 = other.cami[cross_point:]
+            sub_hijo1.extend(sub_hijo2)
+
+            h = []
+            h = sub_hijo1.copy()
+            h.append(m)
+            hijos.append(Estat(self.__pos_pizza, self.__pos_ag, self.__parets, h,
+                               pare=(self, (AccionsRana.BOTAR, Direccio.__getitem__(claus[i])))))
+
+        return hijos
 
     def calcula_heuristica(self,string: str):
         sum=0
@@ -186,7 +221,7 @@ class Rana(joc.Rana):
             madre = cola.get()
             cola.put(madre)
             print(str(madre) + " valor madre:" + str(madre.get_valor()))
-            poblacion=(padre.crossover(madre))
+            poblacion=(padre.crossover2(madre))
             for p in poblacion:
                 p.calc_fitness(string)
                 print(str(p) + " valor:" + str(p.get_valor()) + ", su camino" + str(p.get_camino()))
