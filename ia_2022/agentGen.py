@@ -11,11 +11,7 @@ from practica1.entorn import ClauPercepcio, AccionsRana, Direccio
 from queue import PriorityQueue
 import random
 
-"""
-CLASE INDIVIDU:
-    -__individu: cromosoma que representa el conjunt de gens que conté l'individu
-    -la resta d'atributs representen les percepcions que rep
-"""
+
 class Individu:
     def __init__(self, posPizza, posAgent, parets, individu, valor=None):
         self.__pos_ag = posAgent
@@ -23,19 +19,17 @@ class Individu:
         self.__pos_pizza = posPizza
         self.__parets = parets
 
-        self.__fitness = valor
+        self.__valor = valor
         # self.aplica_mov("Miquel")
 
     def __eq__(self, other):
-        return self.__fitness == other.get_valor()
-    """"
-    Funció per ordenar a la cua de prioritat segons la fitness de l'individu
-    """
+        return self.__valor == other.get_valor()
+
     def __lt__(self, other):
-        return self.__fitness < other.get_valor()
+        return self.__valor < other.get_valor()
 
     def get_valor(self):
-        return self.__fitness
+        return self.__valor
 
     def get_camino(self):
         return self.__individu
@@ -54,17 +48,6 @@ class Individu:
     def pare(self, value):
         self.__pare = value
 
-    """"
-    FUNCIÓ DE CREUAMENT:
-    Aquesta funció serveix per augmentar la població amb la generació de fills de dos bons individus
-        - Per fer aixó agafam un punt de creuament aleatoria per a cada fill on s'agafará una part del pare i la resta 
-        de la mare
-        - Quan generam cada fill hem de recortar la part dels gens que pasen per una paret o fora i ens quedam amb els
-        moviments (gens) válids, a la funció corta()
-        -En el moment en que generam un individu fill hi ha una probabilitat de 50% de mutació, a la funció muta()
-        - Per darrer aclarar que el número de fills es aleatòri
-    """
-
     def crossover(self, mother):
         num_hijos = random.randint(0, len(self.__individu))
         hijos = []
@@ -81,12 +64,7 @@ class Individu:
                 indiv.muta()
             hijos.append(indiv)
         return hijos
-    """"
-    La funció de mutació s'executa per un de cada dos fills generats.
-    Hi ha dos tipus de mutacions amb la mateixa probabilitat:
-        -Es pot afegir un gen al cromosoma, es a dir , s'afegeix un moviment al camí
-        -L'altra opció es que es canvi un gen (moviment) dels ja presents a l'individu
-    """
+
     def muta(self):
         movs = ((-1, 0), (+1, 0), (0, -1), (0, +1), (-2, 0), (+2, 0), (0, -2), (0, +2))
         tipo_mutacion = random.randint(0, 1)
@@ -96,37 +74,30 @@ class Individu:
         # Mutación de cambiar un gen
         else:
             self.__individu[random.randint(0, len(self.__individu) - 1)] = movs[random.randint(0, 7)]
-    """"
-    FUNCIÓ DE FITNESS:Aquesta funció asigna un valor fitness a l'individu
-    Aquest número simplement representa la distància final a la que es trobarà l'individu de la pizza després d'haber 
-    aplicat els seus moviments
-    """
+
     def calc_fitness(self):
         # distancia a la que llega
+
         suma = list((0, 0))
+
         dist = 0
         for e in self.__individu:
             suma[0] += e[0]
             suma[1] += e[1]
 
         # distancia a la pizza
+
         for i in range(2):
             dist += abs(self.__pos_pizza[i] - suma[i])
 
-        self.__fitness = dist
+        self.__valor = dist
 
     def es_meta(self, string: str):
-        return self.__fitness == 0
+        return self.__valor == 0
 
     def get_pos_pizza(self):
         return self.__pos_pizza
 
-    """"
-    Funció per a generar la població inicial.
-    - S'assigna un camí aleatori a cada individu generat 
-    - El numero d'individus de la població inicial sirà init
-    -Tots es corten per a no descartar cap individu
-    """
     def genera_init(self, init: int, string: str):
         poblacion_init = []
         movs = ((-1, 0), (+1, 0), (0, -1), (0, +1), (-2, 0), (+2, 0), (0, -2), (0, +2))
@@ -166,7 +137,6 @@ class Individu:
 
         self.__individu = aux
 
-    #Retornam una llista amb les accions, a partir dels gens de l'individu
     def set_accions(self, string):
         accions = []
         reversed = self.__individu[::-1]
@@ -200,28 +170,31 @@ class Rana(joc.Rana):
 
     def pinta(self, display):
         pass
-    #Funció per a la cerca de l'individu correcte
+
     def cerca_Genetic(self, estat: Individu, string: str):
-        #Població aleatoria inicial
         poblacion = estat.genera_init(20, string)
         cola = PriorityQueue()
-        #Ficam els individua a la cua de prioritat
+        # print(poblacion)
         for p in poblacion:
+            # print(p)
             p.calc_fitness()
             cola.put(p)
 
         while len(poblacion) > 0:
-            #Reproducimos por parejas los mejores de la cola de prioridad
+
+            # enseñamos la cola
             for i in range(10):
                 padre = cola.get()
+
+                # print(puntuaciones)
                 madre = cola.get()
-                #Aumentamos la poblacion con los hijos de la pareja
+                # cola.put(madre)
+                # cola.put(padre)
                 poblacion.extend((padre.crossover(madre)))
-                #Metemos en la cola la nueva población
                 for p in poblacion:
                     p.calc_fitness()
                     cola.put(p)
-                #Comprobamos si alguno es meta
+
                 for i in range(cola.qsize()):
                     p = (list(cola.queue)[i])
                     if p.es_meta(string):

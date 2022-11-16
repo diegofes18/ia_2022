@@ -38,13 +38,13 @@ class Estat:
     def pare(self, value):
         self.__pare = value
 
-
+    #La heurística de l'estat es la distància a la pizza
     def calcula_heuristica(self,string: str):
         sum=0
         for i in range(2):
             sum+=abs(self.__pos_pizza[i] - self.__pos_ag[string][i])
         return self.__pes+sum
-
+    #Comprobam que l'agent de l'estat esta dins la matriu i no toca cap paret
     def es_valid(self,string: str):
         #claus = list(self.__pos_ag.keys())
         # mirar si hi ha parets
@@ -61,6 +61,7 @@ class Estat:
     def get_pos_pizza(self):
         return self.__pos_pizza
 
+    #Generam els estats fills canviant la posició de l'agent amb l'aplicació de tots els posibles nous moviments
     def genera_fills(self,string: str):
         fills = []
         movs={"ESQUERRE":(-1,0),"DRETA":(+1,0), "DALT": (0,-1), "BAIX": (0,+1)}
@@ -68,8 +69,9 @@ class Estat:
         for i, m in enumerate(movs.values()):
             coords = [sum(tup) for tup in zip(self.__pos_ag[string], m)]
             coord = {string: coords}
-            # coords=[(0,0)]
+            #Afegim el cost total: f(n)=h(n)+g(n)
             cost = self.__pes + COST_DESPL
+            #Al nou estat li ficam l'anterior eestat pare per parametre amb l'acció per poder recuperar les accions
             actual = Estat(self.__pos_pizza, coord, self.__parets, cost,
                            (self, (AccionsRana.MOURE, Direccio.__getitem__(claus[i]))))
             if (actual.es_valid(string)):
@@ -102,13 +104,14 @@ class Rana(joc.Rana):
     def pinta(self, display):
         pass
 
-
+    #Feim la cerca per l'arbre de l'estat meta
     def cerca_heur(self, estat:Estat, string:str):
+        #La lista de oberts será una cola de prioridad para poder sacar los de menos coste en orden
         self.__oberts = PriorityQueue()
         self.__tancats = set()
-
+        #metemos en la lista de oberts todos los hijos
         self.__oberts.put((estat.calcula_heuristica(string), estat))
-
+        #Mentre la llista d'oberts tengui estats genram fiils i tancam el que hem tret
         actual = None
         while not self.__oberts.empty():
             _, actual = self.__oberts.get()
@@ -124,7 +127,7 @@ class Rana(joc.Rana):
                 self.__oberts.put((estat_f.calcula_heuristica(string), estat_f))
 
             self.__tancats.add(actual)
-
+        #si l'estat es meta iteram cap amunt per agafar la seva llista d'accions
         if actual.es_meta(string):
             accions = []
             iterador = actual

@@ -3,8 +3,8 @@ from practica1 import agent, joc
 
 def main():
     rana = agent.Rana('Miquel')
-
-    lab = joc.Laberint([rana], parets=True)
+    ran2 = agent.Rana('Diego')
+    lab = joc.Laberint([rana,ran2], parets=True)
     lab.comencar()
 
 
